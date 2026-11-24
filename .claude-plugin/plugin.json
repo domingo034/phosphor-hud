@@ -1,1 +1,1 @@
-{ "name": "phosphor-hud", "version": "0.3.1", "description": "A vector-display gauge drawn into the theme's backdrop corner: context window used and rate-limit windows used. /hud moves or hides it. Sets the Vector Range look itself in every session.", "types": "./types/index.d.ts" }
+{ "name": "phosphor-hud", "version": "0.3.2", "description": "A vector-display gauge drawn into the theme's backdrop corner: context window used and rate-limit windows used. /hud moves or hides it. Sets the Vector Range look itself in every session.", "types": "./types/index.d.ts" }

@@ -42,6 +42,7 @@ In the desktop app, where `/plugin` does not run: click + next to the prompt box
 - `/hud tl 400` also sets how far the left corners sit from the window's left edge, in pixels (340 by default, clear of an open sidebar).
 
 - `/hud skin on` and `/hud skin off` say whether the mod sets the Vector Range look itself.
+- `/hud why` names the clients attached to the session and, where the look is not drawn, the engine's reason.
 
 The corner, the distance and the skin choice are kept in the plugin's store on that computer and read at the start of each session. A cloud session has a store of its own, which ends with it.
 

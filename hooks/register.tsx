@@ -26,14 +26,19 @@ type Engine = EngineInterface
 
 /** Whether the last set reached a client that draws themes. A session opened with none attached has to be set again once one joins. */
 let isWorn = false
+/** Why the last set drew nothing, in the engine's own words; empty where it drew. */
+let notWornFor = 'not set yet'
 
 /** Sets the look; an engine that draws none, or refuses it, is left as it is. */
 async function wear($: Engine): Promise<void> {
   try {
-    isWorn = (await $.theme.set(LOOK)).isDrawn
-  } catch {
+    const set = await $.theme.set(LOOK)
+    isWorn = set.isDrawn
+    notWornFor = set.isDrawn ? '' : set.reason
+  } catch (error) {
     // No theme on this engine: the gauge still rides any scene another plugin draws.
     isWorn = false
+    notWornFor = `the engine refused the theme (${String(error).slice(0, 200)})`
   }
 }
 
@@ -123,7 +128,7 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'hud',
-      description: 'Move the usage gauge on the backdrop: /hud tr, tl, br, bl or off; /hud tl 400 sets the left distance in pixels; /hud skin on or off',
+      description: 'Move the usage gauge on the backdrop: /hud tr, tl, br, bl or off; /hud tl 400 sets the left distance in pixels; /hud skin on or off; /hud why says whether the look is drawn',
     })
 
     await recall($)
@@ -179,6 +184,24 @@ export const register: Register = on => {
     const say = (used: number | null) => (used === null ? '--' : `${Math.round(used)}%`)
     const status = `Used: context ${say(now.context)}, 5h ${say(now.fiveHour)}, 7d ${say(now.sevenDay)}, Fable 7d ${say(now.modelSevenDay)}.`
 
+    if (asked === 'why') {
+      if (await read($, skin)) {
+        await wear($)
+      }
+
+      let attached = 'not known'
+
+      try {
+        attached = (await $.session.surfaces()).join(', ') || 'none'
+      } catch {
+        // An engine without the roster.
+      }
+
+      return {
+        text: `Skin ${(await read($, skin)) ? 'on' : 'off'}. Clients attached to this session: ${attached}. Look ${isWorn ? 'reached a client that draws themes' : `not drawn: ${notWornFor}`}.`,
+      }
+    }
+
     if (asked === 'skin') {
       if (distance !== 'on' && distance !== 'off') {
         return { text: `The Vector Range look is ${(await read($, skin)) ? 'on' : 'off'} in every session. Use /hud skin on or /hud skin off.` }
@@ -191,7 +214,7 @@ export const register: Register = on => {
       if (isOn) {
         await wear($)
 
-        return { text: 'This mod now sets the Vector Range look in every session.' }
+        return { text: `This mod now sets the Vector Range look in every session.${isWorn ? '' : ` Not drawn here: ${notWornFor}.`}` }
       }
 
       try {
