@@ -24,12 +24,16 @@ const LOOK = { backdrop: { scene: SCENE, glass: { blur: 22, tint: '#0e2f27', opa
 
 type Engine = EngineInterface
 
+/** Whether the last set reached a client that draws themes. A session opened with none attached has to be set again once one joins. */
+let isWorn = false
+
 /** Sets the look; an engine that draws none, or refuses it, is left as it is. */
 async function wear($: Engine): Promise<void> {
   try {
-    await $.theme.set(LOOK)
+    isWorn = (await $.theme.set(LOOK)).isDrawn
   } catch {
     // No theme on this engine: the gauge still rides any scene another plugin draws.
+    isWorn = false
   }
 }
 
@@ -140,6 +144,26 @@ export const register: Register = on => {
     }
 
     return started
+  })
+
+  // A client that joins later (the app on another computer, a phone) was not there for the set at the start: set it for that client too.
+  on('session.attach', async ($, e, next) => {
+    const attached = await next(e)
+
+    if ((e.surface === 'desktop' || e.surface === 'mobile') && (await read($, skin))) {
+      await wear($)
+    }
+
+    return attached
+  })
+
+  // And where the look never reached a client that draws it, try again at each prompt until it does.
+  on('prompt.submit', async ($, e, next) => {
+    if (!isWorn && (await read($, skin))) {
+      await wear($)
+    }
+
+    return next(e)
   })
 
   on('session.measure', async ($, e, next) => {
