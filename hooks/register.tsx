@@ -27,8 +27,9 @@ function measured(context: SessionContextUsage, limits: readonly SessionRateLimi
     context: used === undefined ? null : Math.max(0, Math.min(100, used)),
     fiveHour: usedOf(limits, kind => kind === 'five_hour'),
     sevenDay: usedOf(limits, kind => kind === 'seven_day'),
-    // The engine documents no window of the model's own; where it reports one for Fable, this row has it.
-    modelSevenDay: usedOf(limits, kind => kind.startsWith('seven_day_') && kind.includes('fable')),
+    // Fable's weekly limit is the engine's `seven_day_overage_included`. This build hands a mod `five_hour` and `seven_day` alone,
+    // so the row reads `--` until a later one reports that window too.
+    modelSevenDay: usedOf(limits, kind => kind === 'seven_day_overage_included' || kind.includes('fable')),
   }
 }
 

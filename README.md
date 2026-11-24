@@ -7,7 +7,7 @@ It shows how much is used of four things, each as a line the scene's amber beam 
 - **CTX**: the context window
 - **5H**: the five-hour rate-limit window
 - **7D**: the seven-day rate-limit window
-- **F7D**: the Fable model's own seven-day window, where the engine reports one
+- **F7D**: the Fable model's own seven-day limit. Claude Code 2.1.331 gives a mod the five-hour and seven-day windows alone, so this row reads `--` until a later version reports it
 
 A row's figure turns amber from 80% used, and reads `--` while there is no reading. It updates after each turn and when a rate-limit window moves a whole point; the line is drawn out again at each update, and a bright head runs it every few seconds.
 
