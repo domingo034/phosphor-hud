@@ -28,7 +28,7 @@ function measured(context: SessionContextUsage, limits: readonly SessionRateLimi
     fiveHour: usedOf(limits, kind => kind === 'five_hour'),
     sevenDay: usedOf(limits, kind => kind === 'seven_day'),
     // Fable's weekly limit is the engine's `seven_day_overage_included`. This build hands a mod `five_hour` and `seven_day` alone,
-    // so the row reads `--` until a later one reports that window too.
+    // so the row stays hidden until a later one reports that window too.
     modelSevenDay: usedOf(limits, kind => kind === 'seven_day_overage_included' || kind.includes('fable')),
   }
 }

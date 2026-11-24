@@ -13,7 +13,7 @@ const PLATE = '#030a08'
 
 /** Size of the gauge in CSS pixels, and its distance from the window's edges. */
 const WIDTH = 204
-const HEIGHT = 86
+const ROW_STEP = 17
 const INSET_X = 28
 const INSET_TOP = 64
 const INSET_BOTTOM = 150
@@ -117,10 +117,26 @@ const STYLE =
   `@keyframes hud-head{0%{stroke-dashoffset:7;opacity:0}3%{opacity:1}16%{stroke-dashoffset:-93;opacity:1}22%,100%{stroke-dashoffset:-93;opacity:0}}` +
   `@media (prefers-reduced-motion: reduce){.hud-draw,.hud-dot,.hud-head{animation:none}}</style>`
 
-/** The gauge with its own origin at its top left corner, WIDTH by HEIGHT. */
-function gauge(gauges: Gauges): string {
+type Row = { label: string; used: number | null }
+
+/** The rows drawn: the model's own window has one only while there is a reading of it. */
+function rowsOf(gauges: Gauges): Row[] {
+  return [
+    { label: 'CTX', used: gauges.context },
+    { label: '5H', used: gauges.fiveHour },
+    { label: '7D', used: gauges.sevenDay },
+    ...(gauges.modelSevenDay === null ? [] : [{ label: 'F7D', used: gauges.modelSevenDay }]),
+  ]
+}
+
+function heightOf(rows: number): number {
+  return 35 + (rows - 1) * ROW_STEP
+}
+
+/** The gauge with its own origin at its top left corner, WIDTH wide and as tall as its rows. */
+function gauge(rows: Row[]): string {
   const w = WIDTH
-  const h = HEIGHT
+  const h = heightOf(rows.length)
   // Two opposite corners and a dotted rule beside each, not a full frame.
   const frame = `<path d="M0 12V0H26M${w - 26} ${h}H${w}V${h - 12}"/>`
   const dots = `<path d="M32 0h10M${w - 42} ${h}h10" stroke-dasharray="1 4"/>`
@@ -129,14 +145,16 @@ function gauge(gauges: Gauges): string {
     `<rect width="${w}" height="${h}" fill="${PLATE}" fill-opacity="0.42"/>` +
     glow(frame, WARM, 0.8, 0.75) +
     `<g fill="none" stroke="${WARM}" stroke-width="1" stroke-linecap="round" stroke-opacity="0.7">${dots}</g>` +
-    `<g transform="translate(12 12)">${row('CTX', gauges.context, 0, 0)}${row('5H', gauges.fiveHour, 17, 1)}${row('7D', gauges.sevenDay, 34, 2)}${row('F7D', gauges.modelSevenDay, 51, 3)}</g>`
+    `<g transform="translate(12 12)">${rows.map((one, index) => row(one.label, one.used, index * ROW_STEP, index)).join('')}</g>`
   )
 }
 
 export function altOf(gauges: Gauges): string {
   const say = (name: string, used: number | null) => `${name} ${used === null ? 'not known' : `${Math.round(used)}% used`}`
 
-  return `${say('Context window', gauges.context)}, ${say('five-hour limit', gauges.fiveHour)}, ${say('seven-day limit', gauges.sevenDay)}, ${say('seven-day limit of the model', gauges.modelSevenDay)}.`
+  const model = gauges.modelSevenDay === null ? '' : `, ${say('Fable seven-day limit', gauges.modelSevenDay)}`
+
+  return `${say('Context window', gauges.context)}, ${say('five-hour limit', gauges.fiveHour)}, ${say('seven-day limit', gauges.sevenDay)}${model}.`
 }
 
 /**
@@ -146,11 +164,12 @@ export function altOf(gauges: Gauges): string {
 export function withGauge(scene: string, gauges: Gauges, corner: Exclude<Corner, 'off'>, leftInset: number): string {
   const isRight = corner === 'tr' || corner === 'br'
   const isBottom = corner === 'br' || corner === 'bl'
+  const rows = rowsOf(gauges)
   const dx = isRight ? -(WIDTH + INSET_X) : leftInset
-  const dy = isBottom ? -(HEIGHT + INSET_BOTTOM) : INSET_TOP
+  const dy = isBottom ? -(heightOf(rows.length) + INSET_BOTTOM) : INSET_TOP
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${STYLE}${scene}` +
-    `<svg x="${isRight ? '100%' : '0'}" y="${isBottom ? '100%' : '0'}" overflow="visible"><g transform="translate(${dx} ${dy})">${gauge(gauges)}</g></svg></svg>`
+    `<svg x="${isRight ? '100%' : '0'}" y="${isBottom ? '100%' : '0'}" overflow="visible"><g transform="translate(${dx} ${dy})">${gauge(rows)}</g></svg></svg>`
   )
 }
