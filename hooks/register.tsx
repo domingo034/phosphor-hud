@@ -4,33 +4,35 @@ import type { Register, RenderElement, RenderNode, SessionContextUsage, SessionR
 import type { Corner, Gauges } from '../types'
 import { altOf, withGauge } from './hud'
 
-const EMPTY: Gauges = { context: null, fiveHour: null, sevenDay: null }
+const EMPTY: Gauges = { context: null, fiveHour: null, sevenDay: null, modelSevenDay: null }
 const CORNERS: readonly Corner[] = ['tr', 'tl', 'br', 'bl', 'off']
 /** The engine's limit for one Svg. */
 const LIMIT = 131072
 
-const gauges = atom({ plugin: 'phosphor-hud', key: 'gauges' } as const, EMPTY, { shape: 'gauges-1' })
+const gauges = atom({ plugin: 'phosphor-hud', key: 'gauges' } as const, EMPTY, { shape: 'gauges-2' })
 const corner = atom({ plugin: 'phosphor-hud', key: 'corner' } as const, 'tr')
 /** How far the left corners sit from the window's left edge, in pixels: clear of an open sidebar. */
 const leftInset = atom({ plugin: 'phosphor-hud', key: 'leftInset' } as const, 340)
 
-function leftOf(limits: readonly SessionRateLimit[], kind: string): number | null {
-  const limit = limits.find(one => one.kind === kind)
+function usedOf(limits: readonly SessionRateLimit[], isIt: (kind: string) => boolean): number | null {
+  const limit = limits.find(one => isIt(one.kind))
 
-  return limit === undefined ? null : Math.max(0, Math.min(100, 100 - limit.percentUsed))
+  return limit === undefined ? null : Math.max(0, Math.min(100, limit.percentUsed))
 }
 
 function measured(context: SessionContextUsage, limits: readonly SessionRateLimit[]): Gauges {
   const used = context.percent ?? (context.tokens === undefined || context.window <= 0 ? undefined : (context.tokens / context.window) * 100)
 
   return {
-    context: used === undefined ? null : Math.max(0, Math.min(100, 100 - used)),
-    fiveHour: leftOf(limits, 'five_hour'),
-    sevenDay: leftOf(limits, 'seven_day'),
+    context: used === undefined ? null : Math.max(0, Math.min(100, used)),
+    fiveHour: usedOf(limits, kind => kind === 'five_hour'),
+    sevenDay: usedOf(limits, kind => kind === 'seven_day'),
+    // The engine documents no window of the model's own; where it reports one for Fable, this row has it.
+    modelSevenDay: usedOf(limits, kind => kind.startsWith('seven_day_') && kind.includes('fable')),
   }
 }
 
-const isSame = (a: Gauges, b: Gauges) => a.context === b.context && a.fiveHour === b.fiveHour && a.sevenDay === b.sevenDay
+const isSame = (a: Gauges, b: Gauges) => a.context === b.context && a.fiveHour === b.fiveHour && a.sevenDay === b.sevenDay && a.modelSevenDay === b.modelSevenDay
 
 /** The tree another plugin drew, with the gauge laid over its first Svg. */
 function overFirstSvg(node: RenderNode, draw: (source: string) => string | undefined, done: { is: boolean }): RenderNode {
@@ -89,7 +91,8 @@ export const register: Register = on => {
   on('command.run', { command: 'hud' }, async ($, e) => {
     const [asked = '', distance] = e.args.trim().toLowerCase().split(/\s+/)
     const now = await read($, gauges)
-    const status = `Context ${now.context === null ? '--' : `${Math.round(now.context)}%`} left, 5h ${now.fiveHour === null ? '--' : `${Math.round(now.fiveHour)}%`} left, 7d ${now.sevenDay === null ? '--' : `${Math.round(now.sevenDay)}%`} left.`
+    const say = (used: number | null) => (used === null ? '--' : `${Math.round(used)}%`)
+    const status = `Used: context ${say(now.context)}, 5h ${say(now.fiveHour)}, 7d ${say(now.sevenDay)}, Fable 7d ${say(now.modelSevenDay)}.`
 
     if (asked === '') {
       return { text: `${status} Gauge: ${await read($, corner)}, left corners ${await read($, leftInset)}px in. Move it with /hud tr, tl, br, bl or off; /hud tl 400 sets that distance.` }

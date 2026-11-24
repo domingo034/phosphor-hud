@@ -2,13 +2,14 @@
 
 A small gauge for Claude Code, drawn into the corner of the theme's backdrop in the manner of a vector display: green phosphor strokes with a glow, no fonts.
 
-It shows how much is left of three things, as bars that drain:
+It shows how much is used of four things, each as a line the scene's amber beam is drawn along, out to where use has come:
 
 - **CTX**: the context window
 - **5H**: the five-hour rate-limit window
 - **7D**: the seven-day rate-limit window
+- **F7D**: the Fable model's own seven-day window, where the engine reports one
 
-A row turns amber under 20% left, and reads `--` while there is no reading. It updates after each turn and when a rate-limit window moves a whole point.
+A row's figure turns amber from 80% used, and reads `--` while there is no reading. It updates after each turn and when a rate-limit window moves a whole point; the line is drawn out again at each update, and a bright head runs it every few seconds.
 
 ## What it needs
 
