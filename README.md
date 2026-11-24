@@ -13,7 +13,9 @@ A row's figure turns amber from 80% used, and reads `--` while there is no readi
 
 ## What it needs
 
-The gauge is laid over the scene a theme draws, so it shows only where a backdrop is drawn (the desktop and mobile apps) and only while a theme with a scene is on, such as Vector Range from the `theme-examples` plugin. Its colors are made for that theme.
+A backdrop is drawn by the desktop and mobile apps alone, so the gauge shows only there.
+
+The mod carries its own copy of the Vector Range scene and sets that look at the start of every session, so the gauge needs no other plugin. `/hud skin off` stops that; the gauge is then laid over whatever scene another plugin draws, such as a theme of `theme-examples`. Where both are on, the theme set last stands, which is usually the one `theme-examples` keeps for the project.
 
 ## Install
 
@@ -39,4 +41,10 @@ In the desktop app, where `/plugin` does not run: click + next to the prompt box
 - `/hud tr`, `/hud tl`, `/hud br`, `/hud bl` move it to a corner; `/hud off` hides it.
 - `/hud tl 400` also sets how far the left corners sit from the window's left edge, in pixels (340 by default, clear of an open sidebar).
 
-The corner and the distance are kept for the session.
+- `/hud skin on` and `/hud skin off` say whether the mod sets the Vector Range look itself.
+
+The corner, the distance and the skin choice are kept in the plugin's store on that computer and read at the start of each session. A cloud session has a store of its own, which ends with it.
+
+## Credit
+
+`hooks/scene.ts` is the Vector Range scene of Anthropic's `theme-examples` plugin, copied unchanged under the Apache License 2.0 (`LICENSE-theme-examples`).

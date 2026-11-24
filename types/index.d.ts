@@ -5,6 +5,6 @@ export type Gauges = { context: number | null; fiveHour: number | null; sevenDay
 
 declare module 'claude-code' {
   interface PluginState {
-    'phosphor-hud': { gauges: Shaped<Gauges>; corner: Corner; leftInset: number }
+    'phosphor-hud': { gauges: Shaped<Gauges>; corner: Corner; leftInset: number; skin: boolean }
   }
 }
