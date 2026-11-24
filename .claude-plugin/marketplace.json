@@ -1,0 +1,5 @@
+{
+  "name": "phosphor-hud",
+  "owner": { "name": "domingo034" },
+  "plugins": [{ "name": "phosphor-hud", "source": "./" }]
+}

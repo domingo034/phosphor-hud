@@ -1,0 +1,1 @@
+{ "name": "phosphor-hud", "version": "0.1.0", "description": "A vector-display gauge drawn into the theme's backdrop corner: context window left and rate-limit windows left. /hud moves or hides it.", "types": "./types/index.d.ts" }
